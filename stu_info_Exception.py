@@ -2,9 +2,10 @@
 
 
 """
-学生信息库2.0
+学生信息库3.0
 """
-
+class NotArgError(Exception):
+    pass
 
 class StudentInfo(object):
     def __init__(self, students):
@@ -21,12 +22,11 @@ class StudentInfo(object):
         return self.students
 
     def add(self, **student):
-        check = self.check_user_info(**student)
-        if check is False:
-            print(check)
-            return
-
-        self.__add(**student)
+         try:
+            self.check_user_info(**student)
+         except Exception as e:
+             raise e
+         self.__add(**student)
 
         # id_ = max(students) + 1
         #
@@ -39,9 +39,10 @@ class StudentInfo(object):
 
     def adds(self, new_students):
         for student in new_students:
-            check = self.check_user_info(**student)
-            if check != True:
-                print(check, student.get('name'))
+            try:
+                self.check_user_info(**student)
+            except Exception as e:
+                print(e,student.get('name'))
                 continue
             self.__add(**student)
 
@@ -60,15 +61,33 @@ class StudentInfo(object):
     def update(self, student_id, **kwargs):
         if student_id not in students:
             print('不存在这个学号：{}'.format(student_id))
-            return
-        check = self.check_user_info(**kwargs)
-        if check is False:
-            print(check)
-            return
+        try:
+            self.check_user_info(**kwargs)
+        except Exception as e:
+            raise e
         students[student_id] = kwargs
         print('同学信息更新完毕')
 
+    def updates(self, update_student):
+        for student in update_student:
+            try:
+                id_ = list(student.key())[0]
+            except IndexError as e:
+                print(e)
+                continue
+            if id_ not in self.students:
+                print(f'学号{id_}不存在')
+                continue
+            user_info = student[id_]
+            try:
+                self.check_user_info(**user_info)
+            except Exception as e:
+                print(e)
+                continue
+            self.students[id_]  = user_info
+        print('所有用户信息更新完毕')
     def search_users(self, **kwargs):
+        assert len(kwargs) == 1,'参数数量传递错误'
         values = list(self.students.values())
         key = None
         value = None
@@ -87,8 +106,7 @@ class StudentInfo(object):
             key = 'age'
             value = kwargs[key]
         else:
-            print('没有发现搜索的关键字')
-            return
+            raise NotArgError('没有发现搜索的关键字')
 
         for user in values:
             if user[key] == value:
@@ -96,16 +114,30 @@ class StudentInfo(object):
         return result
 
     def check_user_info(self, **kwargs):
-        if 'name' not in kwargs:
-            return '没有发现学生姓名'
-        if 'age' not in kwargs:
-            return '缺少学生年龄'
-        if 'sex' not in kwargs:
-            return '缺少学生性别'
-        if 'class_number' not in kwargs:
-            return '缺少学生班级'
-        return True
+        assert len(kwargs) == 4,'参数必须是4个'
 
+        if 'name' not in kwargs:
+            raise NotArgError('没有发现学生姓名')
+        if 'age' not in kwargs:
+            raise NotArgError('没有发现学生年龄')
+        if 'sex' not in kwargs:
+            raise NotArgError('没有发现学生性别')
+        if 'class_number' not in kwargs:
+            raise NotArgError('没有发现学生班级')
+
+        name_value = kwargs['name']
+        age_value = kwargs['age']
+        sex_valut = kwargs['sex']
+        class_number_value = kwargs['class_number']
+
+        if not isinstance(name_value,str):
+            raise TypeError('name应该是字符串类型')
+        if not isinstance(age_value,int):
+            raise TypeError('age 应该是整形')
+        if not isinstance(sex_valut,str):
+            raise TypeError('sex 应该是字符串类型')
+        if not isinstance(class_number_value,str):
+            raise TypeError('class_number应该是字符串类型')
 
 students = {
     1: {
